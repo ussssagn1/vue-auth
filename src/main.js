@@ -7,6 +7,10 @@ import { initializeApp } from "firebase/app";
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config';
+import './api'
+
+import App from './App.vue'
+import router from './router'
 
 const firebaseConfig = {
   apiKey: "AIzaSyByuVX4iiymiDpycmt7S_blh4QGPMkHOIw",
@@ -17,8 +21,6 @@ const firebaseConfig = {
   appId: "1:119599397233:web:74409a9206cb3e07d15ed0"
 };
 
-import App from './App.vue'
-import router from './router'
 
 initializeApp(firebaseConfig);
 
