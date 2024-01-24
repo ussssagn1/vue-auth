@@ -1,48 +1,55 @@
 import axios from 'axios'
-import { useAuthStore } from '@/stores/auth.js'
-import router from '@/router/index.js'
+import {useAuthStore} from './stores/auth'
+import router from './router'
 
 const axiosApiInstance = axios.create()
 
+const apiKey = import.meta.env.VITE_API_KEY_FIREBASE;
+
 axiosApiInstance.interceptors.request.use((config) => {
   const url = config.url
-  if(!url.includes('signInWithPassword') && !url.includes('signUp')) {
+  if (!url.includes('signInWithPassword') && !url.includes('signUp')) {
     const authStore = useAuthStore()
     let params = new URLSearchParams()
-    params.append('auth', authStore.userData.token)
-    config.params = params;
+    params.append('auth', authStore.userInfo.token)
+    config.params = params
   }
   return config
 })
 
 axiosApiInstance.interceptors.response.use((response) => {
-  return response
+  return response;
 }, async function (error) {
-  const authStore = useAuthStore()
-  const originalError = error.config
-  if (error.response.status === 401 && !originalError._retry) {
-    originalError._retry = true;
+  const authStore = useAuthStore();
+  const originalRequest = error.config;
+
+  if (error.response.status === 401 && !originalRequest._retry) {
+    originalRequest._retry = true;
     try {
       const newTokens = await axios.post(
-        `https://securetoken.googleapis.com/v1/token?key`, {
+        `https://securetoken.googleapis.com/v1/token?key=${apiKey}`, {
           grant_type: 'refresh_token',
-          refresh_token: JSON.parse(localStorage.getItem('userTokens')).refresh_token
+          refresh_token: JSON.parse(localStorage.getItem('userTokens')).refreshToken
         }
-      )
-      authStore.userData.token = newTokens.data.access_token
-      authStore.userData.refreshToken = newTokens.data.refresh_token
+      );
+      console.log('New tokens:', newTokens.data);
+      authStore.userInfo.token = newTokens.data.access_token;
+      authStore.userInfo.refreshToken = newTokens.data.refresh_token;
       localStorage.setItem('userTokens', JSON.stringify({
         token: newTokens.data.access_token,
         refreshToken: newTokens.data.refresh_token
-      }))
-    } catch (e) {
-      console.log('Error: ', e)
-      localStorage.removeItem('userItems')
-      router.push('/signin')
-      authStore.userData.token = '';
-      authStore.userData.refreshToken = ''
+      }));
+    } catch (err) {
+      console.error('Error refreshing tokens:', err);
+      localStorage.removeItem('userTokens');
+      router.push('/signin');
+      authStore.userInfo.token = '';
+      authStore.userInfo.refreshToken = '';
     }
   }
-  console.log(error)
-})
+
+  // Продолжаем передавать ошибку для обработки в компоненте Vue
+  throw error;
+});
+
 export default axiosApiInstance

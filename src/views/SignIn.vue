@@ -7,6 +7,7 @@ import Message from 'primevue/message'
 import { ref } from 'vue'
 import VLoader from '@/components/v-loader.vue'
 import { useRouter } from 'vue-router'
+
 const authStore = useAuthStore()
 
 const email = ref();

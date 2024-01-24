@@ -22,7 +22,7 @@ const signUp = async () => {
 <template>
   <h2>Sign Up</h2>
   <form class="flex flex-column gap-3">
-    <Message v-if="authStore.error" severity="warn">{{ authStore.error }}</Message>
+    <Message v-if="authStore.error" severity="warn">{{ authStore.error.value }}</Message>
     <div class="p-inputgroup flex-1">
       <span class="p-inputgroup-addon">
         <i class="pi pi-user"></i>
