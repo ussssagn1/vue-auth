@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
 import { ref } from 'vue'
+import axiosApiInstance from '../api.js'
 
 const API_KEY = import.meta.env.VITE_API_KEY_FIREBASE;
 export const useAuthStore = defineStore('auth', () => {
@@ -9,7 +9,6 @@ export const useAuthStore = defineStore('auth', () => {
     email: '',
     userId: '',
     refreshToken: '',
-    expiresIn: ''
   })
   const error = ref('')
   const loader = ref(false)
@@ -17,43 +16,54 @@ export const useAuthStore = defineStore('auth', () => {
 
   const auth = async (payload, type) => {
     const stringUrl = type === 'signup' ? 'signUp' : 'signInWithPassword';
-    error.value = '';
-    loader.value = true;
+    error.value = ''; // Ошибки нет
+    loader.value = true; // загрузка происходит
     try {
-      let response = await axios.post(`https://identitytoolkit.googleapis.com/v1/accounts:${stringUrl}?key=${API_KEY}`, {
+      let response = await axiosApiInstance.post(`https://identitytoolkit.googleapis.com/v1/accounts:${stringUrl}?key=${API_KEY}`, {
         ...payload,
         returnSecureToken: true
       });
-      console.log(response.data)
-      userData.value = {
+      userData.value = { // данные заменяються
         token: response.data.idToken,
         email: response.data.email,
         userId: response.data.localId,
         refreshToken: response.data.refreshToken,
-        expiresIn: response.data.expiresIn,
       }
-    } catch (err) {
+      localStorage.setItem('userTokens', JSON.stringify({
+        token: userData.value.token,
+        refreshToken: userData.value.refreshToken,
+      }))
+    } catch(err) {
       switch (err.response.data.error.message) {
         case 'EMAIL_EXISTS':
-          error.value = 'Email exists';
+          error.value = 'Email exists'
           break;
         case 'OPERATION_NOT_ALLOWED':
-          error.value = 'Operation not allowed';
+          error.value = 'Operation not allowed'
           break;
-        case 'TOO_MANY_ATTEMPTS_TRY_LATER':
-          error.value = 'Too many attempts';
+        case 'EMAIL_NOT_FOUND':
+          error.value = 'Email not found'
           break;
-        case 'INVALID_LOGIN_CREDENTIALS':
-          error.value = 'Invalid login or password';
+        case 'INVALID_PASSWORD':
+          error.value = 'Invalid password'
           break;
         default:
           error.value = 'Error'
           break;
       }
+      throw error.value;
+    } finally {
       loader.value = false;
-      throw error.value
     }
   }
 
-  return { auth, userData, error, loader }
+  const logout = () => {
+    userData.value = {
+      token: '',
+      email: '',
+      userId: '',
+      refreshToken: '',
+    }
+  }
+  return { auth, userData, error, loader, logout }
 })

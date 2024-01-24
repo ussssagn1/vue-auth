@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import SignUp from '@/views/SignUp.vue'
 import SignIn from '@/views/SignIn.vue'
 import CarsPage from '@/views/CarsPage.vue'
+import { useAuthStore } from '@/stores/auth.js'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -15,7 +16,10 @@ const router = createRouter({
     {
       path: '/signup',
       name: 'signup',
-      component: SignUp
+      component: SignUp,
+      meta: {
+        auth: false
+      }
     },
     {
       path: '/signin',
@@ -25,9 +29,22 @@ const router = createRouter({
     {
       path: '/cars',
       name: 'cars',
-      component: CarsPage
+      component: CarsPage,
+      meta: {
+        auth: true
+      }
     },
   ]
 })
 
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore();
+  if(to.meta.auth && !authStore.userData.token) {
+    next('/signin')
+  } else if (!to.meta.auth && authStore.userData.token)  {
+    next('/cars')
+  } else {
+    next();
+  }
+})
 export default router

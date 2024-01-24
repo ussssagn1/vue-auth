@@ -1,6 +1,6 @@
 <script setup>
 import {ref, onMounted} from 'vue'
-import axios from 'axios'
+import axiosApiInstance from '../api.js'
 
 import Card from 'primevue/card'
 import VLoader from '@/components/v-loader.vue';
@@ -11,7 +11,7 @@ const showLoader = ref(false);
 const getAllCars = async () => {
   showLoader.value = true
   try {
-    const response = await axios.get('https://jwt-firebase-vue3-d7996-default-rtdb.europe-west1.firebasedatabase.app/cars.json')
+    const response = await axiosApiInstance.get('https://jwt-firebase-vue3-d7996-default-rtdb.europe-west1.firebasedatabase.app/cars.json')
     cars.value = response.data
   } catch (err) {
     console.log(err.response);
